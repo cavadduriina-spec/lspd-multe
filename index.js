@@ -15,7 +15,8 @@ const fs = require('fs');
 const TOKEN = process.env.TOKEN;
 
 // 🔧 CONFIGURA QUI
-const CHANNEL_ID = "1496125333500465162";
+const CHANNEL_ID = "1496125333500465162"; // dove c'è il bottone
+const LOG_CHANNEL_ID = "1496616270265581641"; // dove arrivano le multe
 const ADMIN_ROLE = "1496613807953416202";
 
 // DATABASE
@@ -23,18 +24,16 @@ const DB_FILE = "./multe.json";
 
 let data = {};
 
-// ✅ FIX ANTI-CRASH JSON
+// FIX JSON
 if (fs.existsSync(DB_FILE)) {
   try {
     const raw = fs.readFileSync(DB_FILE, "utf-8");
     data = raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    console.log("Database corrotto, reset...");
+  } catch {
     data = {};
   }
 }
 
-// SALVA
 function saveData() {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
@@ -45,19 +44,19 @@ const client = new Client({
 
 // READY
 client.once(Events.ClientReady, async () => {
-  console.log(`Bot Multe LSPD Online: ${client.user.tag}`);
+  console.log(`Bot Multe Online: ${client.user.tag}`);
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('multa')
-      .setLabel('💸 Emetti Multa')
+      .setLabel('💸 Fai Multa')
       .setStyle(ButtonStyle.Danger)
   );
 
-  const channel = await client.channels.fetch(CHANNEL_ID);
+  const ch = await client.channels.fetch(CHANNEL_ID);
 
-  await channel.send({
-    content: "**💼 LSPD - SISTEMA MULTE**\nSolo alto comando può usarlo.",
+  await ch.send({
+    content: "**💼 LSPD - MULTE**\nPremi il bottone per compilare.",
     components: [row]
   });
 });
@@ -67,25 +66,17 @@ client.on(Events.InteractionCreate, async interaction => {
 
   // BOTTONE
   if (interaction.isButton()) {
-
-    if (!interaction.member.roles.cache.has(ADMIN_ROLE)) {
-      return interaction.reply({
-        content: "❌ Non autorizzato",
-        ephemeral: true
-      });
-    }
-
     if (interaction.customId === "multa") {
 
       const modal = new ModalBuilder()
         .setCustomId("multa_form")
-        .setTitle("Emissione Multa LSPD");
+        .setTitle("Multa LSPD");
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
           new TextInputBuilder()
             .setCustomId('utente')
-            .setLabel("Tag utente (@utente)")
+            .setLabel("Tag collega multato (@utente)")
             .setStyle(TextInputStyle.Short)
         ),
         new ActionRowBuilder().addComponents(
@@ -121,10 +112,6 @@ client.on(Events.InteractionCreate, async interaction => {
   // MODULO
   if (interaction.isModalSubmit()) {
 
-    if (!interaction.member.roles.cache.has(ADMIN_ROLE)) {
-      return interaction.reply({ content: "❌ Non autorizzato", ephemeral: true });
-    }
-
     const targetInput = interaction.fields.getTextInputValue('utente');
     const targetId = targetInput.replace(/[<@!>]/g, "");
 
@@ -133,9 +120,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const motivo = interaction.fields.getTextInputValue('motivo');
     const importo = interaction.fields.getTextInputValue('importo');
 
-    if (!data[targetId]) {
-      data[targetId] = [];
-    }
+    if (!data[targetId]) data[targetId] = [];
 
     const multa = {
       agente: interaction.user.id,
@@ -149,8 +134,25 @@ client.on(Events.InteractionCreate, async interaction => {
     data[targetId].push(multa);
     saveData();
 
+    // 🔥 INVIO NEL CANALE LOG
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+
+    await logChannel.send(`
+🚨 **NUOVA MULTA LSPD**
+
+👮 Agente: <@${interaction.user.id}>
+👤 Multato: <@${targetId}>
+
+📄 Nome: ${nome}
+📅 Nascita: ${nascita}
+💸 Importo: ${importo}€
+📝 Motivo: ${motivo}
+
+<@&${ADMIN_ROLE}>
+`);
+
     return interaction.reply({
-      content: `✅ Multa registrata a <@${targetId}>`,
+      content: "✅ Multa inviata allo staff",
       ephemeral: true
     });
   }
