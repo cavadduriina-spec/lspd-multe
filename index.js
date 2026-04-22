@@ -15,7 +15,7 @@ const fs = require('fs');
 const TOKEN = process.env.TOKEN;
 
 // 🔧 CONFIGURA QUI
-const CHANNEL_ID = "1496125333500465162"; // dove c'è il bottone
+const CHANNEL_ID = "1496125333500465162"; // dove sta il bottone
 const LOG_CHANNEL_ID = "1496616270265581641"; // dove arrivano le multe
 const ADMIN_ROLE = "1496613807953416202";
 
@@ -24,16 +24,18 @@ const DB_FILE = "./multe.json";
 
 let data = {};
 
-// FIX JSON
+// FIX JSON (ANTI-CRASH)
 if (fs.existsSync(DB_FILE)) {
   try {
     const raw = fs.readFileSync(DB_FILE, "utf-8");
     data = raw ? JSON.parse(raw) : {};
   } catch {
+    console.log("Database corrotto, reset...");
     data = {};
   }
 }
 
+// SALVA
 function saveData() {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
@@ -44,7 +46,7 @@ const client = new Client({
 
 // READY
 client.once(Events.ClientReady, async () => {
-  console.log(`Bot Multe Online: ${client.user.tag}`);
+  console.log(`Bot Multe LSPD Online: ${client.user.tag}`);
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -56,7 +58,7 @@ client.once(Events.ClientReady, async () => {
   const ch = await client.channels.fetch(CHANNEL_ID);
 
   await ch.send({
-    content: "**💼 LSPD - MULTE**\nPremi il bottone per compilare.",
+    content: "**💼 LSPD - MULTE**\nPremi il bottone per fare una multa.",
     components: [row]
   });
 });
@@ -70,13 +72,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
       const modal = new ModalBuilder()
         .setCustomId("multa_form")
-        .setTitle("Multa LSPD");
+        .setTitle("Verbale Multa LSPD");
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
           new TextInputBuilder()
             .setCustomId('utente')
-            .setLabel("Tag collega multato (@utente)")
+            .setLabel("Tag collega multa (@utente)")
             .setStyle(TextInputStyle.Short)
         ),
         new ActionRowBuilder().addComponents(
@@ -134,25 +136,27 @@ client.on(Events.InteractionCreate, async interaction => {
     data[targetId].push(multa);
     saveData();
 
-    // 🔥 INVIO NEL CANALE LOG
+    // INVIO NEL CANALE LOG
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     await logChannel.send(`
-🚨 **NUOVA MULTA LSPD**
+🚨 **VERBALE MULTA LSPD**
 
 👮 Agente: <@${interaction.user.id}>
-👤 Multato: <@${targetId}>
+👤 Collega multato: <@${targetId}>
 
 📄 Nome: ${nome}
-📅 Nascita: ${nascita}
+📅 Data nascita: ${nascita}
 💸 Importo: ${importo}€
 📝 Motivo: ${motivo}
+
+📌 Multa registrata da <@${interaction.user.id}>
 
 <@&${ADMIN_ROLE}>
 `);
 
     return interaction.reply({
-      content: "✅ Multa inviata allo staff",
+      content: "✅ Multa mandata",
       ephemeral: true
     });
   }
