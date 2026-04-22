@@ -57,7 +57,7 @@ client.once(Events.ClientReady, async () => {
   const ch = await client.channels.fetch(CHANNEL_ID);
 
   await ch.send({
-    content: "**💼 LSPD - MULTE**\nPremi il bottone per fare una multa.",
+    content: "** LSPD MULTE**\nPremi il bottone per fare una multa.",
     components: [row]
   });
 });
@@ -142,13 +142,13 @@ client.on(Events.InteractionCreate, async interaction => {
     await logChannel.send(`
  **MULTA LSPD**
 
-👮 Agente: <@${interaction.user.id}>
+ Agente: <@${interaction.user.id}>
  Collega Pattuglia: <@${targetId}>
 
-📄 Nome: ${nome}
-📅 Data nascita: ${nascita}
-💸 Importo: ${importo}€
-📝 Motivo: ${motivo}
+ Nome: ${nome}
+ Data nascita: ${nascita}
+ Importo: ${importo}€
+ Motivo: ${motivo}
 
  Multa eseguita da <@${interaction.user.id}> con <@${targetId}>
 
