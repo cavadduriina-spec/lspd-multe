@@ -140,23 +140,23 @@ client.on(Events.InteractionCreate, async interaction => {
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     await logChannel.send(`
-🚨 **VERBALE MULTA LSPD**
+ **MULTA LSPD**
 
 👮 Agente: <@${interaction.user.id}>
-🤝 Collega coinvolto: <@${targetId}>
+ Collega Pattuglia: <@${targetId}>
 
 📄 Nome: ${nome}
 📅 Data nascita: ${nascita}
 💸 Importo: ${importo}€
 📝 Motivo: ${motivo}
 
-📌 Multa eseguita da <@${interaction.user.id}> con <@${targetId}>
+ Multa eseguita da <@${interaction.user.id}> con <@${targetId}>
 
 <@&${ADMIN_ROLE}>
 `);
 
     return interaction.reply({
-      content: "✅ Multa mandata",
+      content: " Multa mandata",
       ephemeral: true
     });
   }
