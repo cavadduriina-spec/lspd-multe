@@ -15,8 +15,8 @@ const fs = require('fs');
 const TOKEN = process.env.TOKEN;
 
 // 🔧 CONFIGURA QUI
-const CHANNEL_ID = "1496125333500465162"; // dove sta il bottone
-const LOG_CHANNEL_ID = "1496616270265581641"; // dove arrivano le multe
+const CHANNEL_ID = "1496125333500465162";
+const LOG_CHANNEL_ID = "1496616270265581641";
 const ADMIN_ROLE = "1496613807953416202";
 
 // DATABASE
@@ -24,7 +24,7 @@ const DB_FILE = "./multe.json";
 
 let data = {};
 
-// FIX JSON (ANTI-CRASH)
+// FIX JSON
 if (fs.existsSync(DB_FILE)) {
   try {
     const raw = fs.readFileSync(DB_FILE, "utf-8");
@@ -35,7 +35,6 @@ if (fs.existsSync(DB_FILE)) {
   }
 }
 
-// SALVA
 function saveData() {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
@@ -78,7 +77,7 @@ client.on(Events.InteractionCreate, async interaction => {
         new ActionRowBuilder().addComponents(
           new TextInputBuilder()
             .setCustomId('utente')
-            .setLabel("Tag collega multa (@utente)")
+            .setLabel("Tag collega coinvolto (@utente)")
             .setStyle(TextInputStyle.Short)
         ),
         new ActionRowBuilder().addComponents(
@@ -126,6 +125,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
     const multa = {
       agente: interaction.user.id,
+      collega: targetId,
       nome,
       nascita,
       motivo,
@@ -136,21 +136,21 @@ client.on(Events.InteractionCreate, async interaction => {
     data[targetId].push(multa);
     saveData();
 
-    // INVIO NEL CANALE LOG
+    // INVIO LOG
     const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
 
     await logChannel.send(`
 🚨 **VERBALE MULTA LSPD**
 
 👮 Agente: <@${interaction.user.id}>
-👤 Collega multato: <@${targetId}>
+🤝 Collega coinvolto: <@${targetId}>
 
 📄 Nome: ${nome}
 📅 Data nascita: ${nascita}
 💸 Importo: ${importo}€
 📝 Motivo: ${motivo}
 
-📌 Multa registrata da <@${interaction.user.id}>
+📌 Multa eseguita da <@${interaction.user.id}> con <@${targetId}>
 
 <@&${ADMIN_ROLE}>
 `);
